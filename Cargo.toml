@@ -1,0 +1,6 @@
+[package]
+name = "prettify_pinyin"
+version = "1.0.0"
+authors = ["Preston Wang-Stosur-Bassett <p.wanstobas@gmail.com>"]
+
+[dependencies]

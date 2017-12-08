@@ -1,0 +1,97 @@
+/*
+ * @author      ::  Preston Wang-Stosur-Bassett <http://stosur.info>
+ * @date        ::  December 8, 2017
+ * @description ::  This file takes pinyin with tone numbers and returns pinyin with tone marks
+*/
+/*
+ * NOTE: This file is a Rust translation of John Heroy's prettify-pinyin node module which can be found at: https://github.com/johnheroy/prettify-pinyin
+*/
+
+use std::collections::HashMap;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn prettify() {
+        use prettify_pinyin;
+
+        let hello = String::from("nǐ hǎo");
+        let china = String::from("zhōng guó");
+        let all_tones = String::from("mā má mǎ mà");
+        let no_tones = String::from("ma");
+
+        assert_eq!(hello, prettify_pinyin(String::from("ni3 hao3")));
+        assert_eq!(china, prettify_pinyin(String::from("zhong1 guo2")));
+        assert_eq!(all_tones, prettify_pinyin(String::from("ma1 ma2 ma3 ma4")));
+        assert_eq!(no_tones, prettify_pinyin(String::from("ma")));
+    }
+}
+
+pub fn prettify_pinyin(raw: String) -> String {
+    let mut replacements: HashMap<String, Vec<String>> = HashMap::new();
+    replacements.insert(String::from("a"), vec![String::from("ā"), String::from("á"), String::from("ǎ"), String::from("à")]);
+    replacements.insert(String::from("e"), vec![String::from("ē"), String::from("é"), String::from("ě"), String::from("è")]);
+    replacements.insert(String::from("u"), vec![String::from("ū"), String::from("ú"), String::from("ǔ"), String::from("ù")]);
+    replacements.insert(String::from("i"), vec![String::from("ī"), String::from("í"), String::from("ǐ"), String::from("ì")]);
+    replacements.insert(String::from("o"), vec![String::from("ō"), String::from("ó"), String::from("ǒ"), String::from("ò")]);
+    replacements.insert(String::from("ü"), vec![String::from("ǖ"), String::from("ǘ"), String::from("ǚ"), String::from("ǜ")]);
+
+    //let medials: Vec<String> = vec!["i", "u", "ü"];
+    let mut medials: HashMap<String, i32> = HashMap::new();
+    medials.insert(String::from("i"), 0 as i32);
+    medials.insert(String::from("u"), 0 as i32);
+    medials.insert(String::from("ü"), 0 as i32);
+
+    let mut syl_vec: Vec<String> = Vec::new();
+    let text = raw.replace("v", "ü");
+    let syllables: Vec<_> = text.split(" ").collect();
+
+    for syllable in syllables {
+        let tone: i32 = match syllable.chars().skip(syllable.chars().count() - 1).take(1).collect::<String>().parse::<i32>() {
+            Ok(tone) => tone,
+            Err(_e) => {
+                syl_vec.push(syllable.to_string());
+                continue;
+            }
+        };
+
+        if tone <= 0 as i32 || tone > 5 as i32 {
+            // This is not a valid number
+            println!("Invalid tone number: {:?} in: {:?}", tone, syllable);
+        } else if tone == 5 as i32 {
+            let pretty_syl: String = syllable.chars().take(syllable.chars().count() - 1).collect();
+            syl_vec.push(pretty_syl);
+        } else {
+            let mut j: i32 = 0 as i32;
+            let mut done = false;
+
+            while !done {
+                let current_letter: String = syllable.chars().skip(j as usize).take(1).collect();
+                let next_letter: String = syllable.chars().skip((j + (1 as i32)) as usize).take(1).collect();
+
+                if replacements.contains_key(&current_letter) {
+                    let to_replace;
+
+                    if replacements.contains_key(&next_letter) && medials.contains_key(&current_letter) {
+                        to_replace = next_letter;
+                    } else {
+                        to_replace = current_letter;
+                    }
+
+                    let replaced: String = syllable.replace(&to_replace, replacements.get(&to_replace).unwrap().get((tone - (1 as i32)) as usize).unwrap());
+                    let pretty_syl: String = replaced.chars().take(replaced.chars().count() - 1).collect();
+                    syl_vec.push(pretty_syl);
+                    break;
+                }
+
+                j = j + (1 as i32);
+                if j as usize == syllable.chars().count() {
+                    done = true;
+                }
+            }
+        }
+    }
+
+    let pretty_pinyin: String = syl_vec.join(" ");
+    return pretty_pinyin;
+}
