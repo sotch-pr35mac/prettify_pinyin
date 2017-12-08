@@ -1,6 +1,6 @@
 [package]
 name = "prettify_pinyin"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Preston Wang-Stosur-Bassett <p.wanstobas@gmail.com>"]
 description = "Turn tone numbers into tone marks"
 repository = "https://github.com/sotch-pr35mac/prettify_pinyin"
@@ -8,5 +8,3 @@ readme = "README.md"
 keywords = ["pinyin", "chinese", "hanzi"]
 categories = ["localization", "value-formatting"]
 license = "MIT"
-license-file = "LICENSE"
-maintenance = { status = "passively-maintined" }
