@@ -1,5 +1,5 @@
 # prettify_pinyin
-##### v0.1.1
+##### v1.0.0
 ---
 
 ### About
@@ -11,10 +11,10 @@ This project is a Rust translation of [John Heroy's](https://github.com/johnhero
 ```rust
 extern crate prettify_pinyin;
 
-use prettify_pinyin::prettify_pinyin;
+use prettify_pinyin::prettify;
 
 let test = String::from("ma1 ma2 ma3 ma4 ma");
-let formatted: String = prettify_pinyin(test);
+let formatted: String = prettify(test);
 
 println!("{}", formatted); // --> mā má mǎ mà ma
 ``` 
