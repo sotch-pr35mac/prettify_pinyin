@@ -28,8 +28,6 @@ jobs:
         with:
           ref: 'master'
           fetch-depth: 0
-      - name: Fetch History
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Bump Version Number
         id: bump_version
         uses: sotch-pr35mac/bump@master
@@ -47,8 +45,6 @@ jobs:
         with:
           ref: 'master'
           fetch-depth: 0
-      - name: Fetch History 
-        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
