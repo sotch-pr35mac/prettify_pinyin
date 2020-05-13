@@ -48,6 +48,8 @@ mod tests {
 
 /// # prettify
 /// ```
+/// extern crate prettify_pinyin;
+/// use prettify_pinyin::prettify;
 /// prettify(String::from("ma1 ma2 ma3 ma4 ma")); // --> mā má mǎ mà ma
 /// ```
 pub fn prettify(raw: String) -> String {
