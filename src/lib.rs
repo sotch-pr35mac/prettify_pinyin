@@ -1,16 +1,9 @@
-/*
- * @author      ::  Preston Wang-Stosur-Bassett <http://stosur.info>
- * @date        ::  December 8, 2017
- * @description ::  This file takes pinyin with tone numbers and returns pinyin with tone marks
-*/
-/*
- * NOTE: This file is a Rust translation of John Heroy's prettify-pinyin node module which can be found at: https://github.com/johnheroy/prettify-pinyin
-*/
+// @author      ::  Preston Wang-Stosur-Bassett <http://stosur.info>
+// @date        ::  December 8, 2017
+// @description ::  This file takes pinyin with tone numbers and returns pinyin with tone marks
 
 //! ### About
 //! Turn pinyin written with tone numbers and turn it into pinyin with node marks. prettify_pinyin accepts input in the [CC-CEDICT](https://cc-cedict.org/wiki/format:syntax) pinyin format (space separated syllables with tone numbers at the end of each syllable), for example: "ni3 hao3" will get turned into "nǐ hǎo".
-//!
-//! This project is a Rust translation of [John Heroy's](https://github.com/johnheroy) [prettify-pinyin](https://github.com/johnheroy/prettify-pinyin) JavaScript project.
 //!
 //! ### Usage
 //! ```rust
@@ -67,18 +60,17 @@ pub fn prettify(raw: String) -> String {
     replacements.insert(String::from("O"), vec![String::from("Ō"), String::from("Ó"), String::from("Ŏ"), String::from("Ò")]);
     replacements.insert(String::from("Ü"), vec![String::from("Ǖ"), String::from("Ǘ"), String::from("Ǚ"), String::from("Ǜ")]);
 
-    //let medials: Vec<String> = vec!["i", "u", "ü"];
-    let mut medials: HashMap<String, i32> = HashMap::new();
-    medials.insert(String::from("i"), 0 as i32);
-    medials.insert(String::from("u"), 0 as i32);
-    medials.insert(String::from("ü"), 0 as i32);
+    let mut medials: HashMap<String, u8> = HashMap::new();
+    medials.insert(String::from("i"), 0 as u8);
+    medials.insert(String::from("u"), 0 as u8);
+    medials.insert(String::from("ü"), 0 as u8);
 
     let mut syl_vec: Vec<String> = Vec::new();
     let text = raw.replace("v", "ü");
     let syllables: Vec<_> = text.split(" ").collect();
 
     for syllable in syllables {
-        let tone: i32 = match syllable.chars().skip(syllable.chars().count() - 1).take(1).collect::<String>().parse::<i32>() {
+        let tone: u8 = match syllable.chars().skip(syllable.chars().count() - 1).take(1).collect::<String>().parse::<u8>() {
             Ok(tone) => tone,
             Err(_e) => {
                 syl_vec.push(syllable.to_string());
@@ -86,19 +78,19 @@ pub fn prettify(raw: String) -> String {
             }
         };
 
-        if tone <= 0 as i32 || tone > 5 as i32 {
+        if tone <= 0 as u8 || tone > 5 as u8 {
             // This is not a valid number
             println!("Invalid tone number: {:?} in: {:?}", tone, syllable);
-        } else if tone == 5 as i32 {
+        } else if tone == 5 as u8 {
             let pretty_syl: String = syllable.chars().take(syllable.chars().count() - 1).collect();
             syl_vec.push(pretty_syl);
         } else {
-            let mut j: i32 = 0 as i32;
+            let mut j = 0 as u8;
             let mut done = false;
 
             while !done {
                 let current_letter: String = syllable.chars().skip(j as usize).take(1).collect();
-                let next_letter: String = syllable.chars().skip((j + (1 as i32)) as usize).take(1).collect();
+                let next_letter: String = syllable.chars().skip((j + (1 as u8)) as usize).take(1).collect();
 
                 if replacements.contains_key(&current_letter) {
                     let to_replace;
@@ -109,13 +101,13 @@ pub fn prettify(raw: String) -> String {
                         to_replace = current_letter;
                     }
 
-                    let replaced: String = syllable.replace(&to_replace, replacements.get(&to_replace).unwrap().get((tone - (1 as i32)) as usize).unwrap());
+                    let replaced: String = syllable.replace(&to_replace, replacements.get(&to_replace).unwrap().get((tone - (1 as u8)) as usize).unwrap());
                     let pretty_syl: String = replaced.chars().take(replaced.chars().count() - 1).collect();
                     syl_vec.push(pretty_syl);
                     break;
                 }
 
-                j = j + (1 as i32);
+                j = j + (1 as u8);
                 if j as usize == syllable.chars().count() {
                     done = true;
                 }
