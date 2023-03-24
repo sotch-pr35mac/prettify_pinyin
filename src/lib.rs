@@ -23,7 +23,7 @@ use std::collections::HashMap;
 mod tests {
     #[test]
     fn prettify() {
-        use prettify;
+        use crate::prettify;
 
         let hello = String::from("nǐ hǎo");
         let china = String::from("zhōng guó");
@@ -40,7 +40,7 @@ mod tests {
 
     #[test]
     fn prettify_umlaut() {
-        use prettify;
+        use crate::prettify;
 
         assert_eq!("nǚ nǚ", prettify(String::from("nu:3 nu:3")));
         assert_eq!("NǙ", prettify(String::from("NU:3")));
