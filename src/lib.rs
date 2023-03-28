@@ -23,7 +23,7 @@ use std::collections::HashMap;
 mod tests {
     #[test]
     fn prettify() {
-        use prettify;
+        use crate::prettify;
 
         let hello = String::from("nǐ hǎo");
         let china = String::from("zhōng guó");
@@ -36,6 +36,15 @@ mod tests {
         assert_eq!(all_tones, prettify(String::from("ma1 ma2 ma3 ma4")));
         assert_eq!(no_tones, prettify(String::from("ma")));
         assert_eq!(capital_letter, prettify(String::from("An1 hui1")));
+    }
+
+    #[test]
+    fn prettify_umlaut() {
+        use crate::prettify;
+
+        assert_eq!("nǚ nǚ", prettify(String::from("nu:3 nu:3")));
+        assert_eq!("NǙ", prettify(String::from("NU:3")));
+        assert_eq!("nǚ NǙ", prettify(String::from("nu:3 NU:3")));
     }
 }
 
@@ -163,6 +172,8 @@ pub fn prettify(raw: String) -> String {
 
     let mut syl_vec: Vec<String> = Vec::new();
     let text = raw.replace('v', "ü");
+    let text = text.replace("u:", "ü");
+    let text = text.replace("U:", "Ü");
     let syllables: Vec<_> = text.split(' ').collect();
 
     for syllable in syllables {
