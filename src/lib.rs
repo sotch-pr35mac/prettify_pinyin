@@ -21,10 +21,10 @@ use std::collections::HashMap;
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn prettify() {
-        use crate::prettify;
+    use super::prettify;
 
+    #[test]
+    fn prettify_basic() {
         let hello = String::from("nǐ hǎo");
         let china = String::from("zhōng guó");
         let all_tones = String::from("mā má mǎ mà");
@@ -40,11 +40,14 @@ mod tests {
 
     #[test]
     fn prettify_umlaut() {
-        use crate::prettify;
-
         assert_eq!("nǚ nǚ", prettify(String::from("nu:3 nu:3")));
         assert_eq!("NǙ", prettify(String::from("NU:3")));
         assert_eq!("nǚ NǙ", prettify(String::from("nu:3 NU:3")));
+    }
+
+    #[test]
+    fn invalid_tone() {
+        assert_eq!("ni7", prettify(String::from("ni7")));
     }
 }
 
@@ -177,15 +180,9 @@ pub fn prettify(raw: String) -> String {
     let syllables: Vec<_> = text.split(' ').collect();
 
     for syllable in syllables {
-        let tone: u8 = match syllable
-            .chars()
-            .skip(syllable.chars().count() - 1)
-            .take(1)
-            .collect::<String>()
-            .parse::<u8>()
-        {
-            Ok(tone) => tone,
-            Err(_e) => {
+        let tone: u8 = match syllable.chars().last().and_then(|c| c.to_digit(6)) {
+            Some(tone) => tone as u8,
+            None => {
                 syl_vec.push(syllable.to_string());
                 continue;
             }
@@ -193,7 +190,7 @@ pub fn prettify(raw: String) -> String {
 
         if tone == 0_u8 || tone > 5_u8 {
             // This is not a valid number
-            println!("Invalid tone number: {:?} in: {:?}", tone, syllable);
+            syl_vec.push(syllable.to_string());
         } else if tone == 5_u8 {
             let pretty_syl: String = syllable
                 .chars()
