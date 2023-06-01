@@ -3,12 +3,13 @@
 // @description ::  This file takes pinyin with tone numbers and returns pinyin with tone marks
 
 //! ### About
-//! Turn pinyin written with tone numbers and turn it into pinyin with node marks. prettify_pinyin accepts input in the [CC-CEDICT](https://cc-cedict.org/wiki/format:syntax) pinyin format (space separated syllables with tone numbers at the end of each syllable), for example: "ni3 hao3" will get turned into "nǐ hǎo".
+//! Turn pinyin written with tone numbers and turn it into pinyin with node marks. prettify_pinyin
+//! accepts input in the [CC-CEDICT](https://cc-cedict.org/wiki/format:syntax) pinyin format (space
+//! separated syllables with tone numbers at the end of each syllable), for example: "ni3 hao3" will
+//! get turned into "nǐ hǎo".
 //!
 //! ### Usage
 //! ```rust
-//! extern crate prettify_pinyin;
-//!
 //! use prettify_pinyin::prettify;
 //!
 //! let test = String::from("ma1 ma2 ma3 ma4 ma");
@@ -17,7 +18,7 @@
 //! println!("{}", formatted); // --> mā má mǎ mà ma
 //! ```
 
-use std::collections::HashMap;
+use std::borrow::Cow;
 
 #[cfg(test)]
 mod tests {
@@ -30,12 +31,14 @@ mod tests {
         let all_tones = String::from("mā má mǎ mà");
         let no_tones = String::from("ma");
         let capital_letter = String::from("Ān huī");
+        let yelling = String::from("NǏ HǍO ZHŌNG GUÓ");
 
         assert_eq!(hello, prettify(String::from("ni3 hao3")));
         assert_eq!(china, prettify(String::from("zhong1 guo2")));
         assert_eq!(all_tones, prettify(String::from("ma1 ma2 ma3 ma4")));
         assert_eq!(no_tones, prettify(String::from("ma")));
         assert_eq!(capital_letter, prettify(String::from("An1 hui1")));
+        assert_eq!(yelling, prettify(String::from("NI3 HAO3 ZHONG1 GUO2")));
     }
 
     #[test]
@@ -49,200 +52,102 @@ mod tests {
     fn invalid_tone() {
         assert_eq!("ni7", prettify(String::from("ni7")));
     }
+
+    #[test]
+    fn clear_tones() {
+        assert_eq!("ni", prettify(String::from("nǐ5")));
+        assert_eq!("nǚ nü", prettify(String::from("nǚ nǚ5")));
+    }
+
+    #[test]
+    fn reassign_tones() {
+        assert_eq!("nī", prettify(String::from("nǐ1")));
+        assert_eq!("nǘ nǜ", prettify(String::from("nǚ2 nǚ4")));
+    }
+}
+
+static REPLACEMENTS: [(char, [char; 5]); 12] = [
+    ('a', ['ā', 'á', 'ǎ', 'à', 'a']),
+    ('e', ['ē', 'é', 'ě', 'è', 'e']),
+    ('u', ['ū', 'ú', 'ǔ', 'ù', 'u']),
+    ('i', ['ī', 'í', 'ǐ', 'ì', 'i']),
+    ('o', ['ō', 'ó', 'ǒ', 'ò', 'o']),
+    ('ü', ['ǖ', 'ǘ', 'ǚ', 'ǜ', 'ü']),
+    ('A', ['Ā', 'Á', 'Ǎ', 'À', 'A']),
+    ('E', ['Ē', 'É', 'Ě', 'È', 'E']),
+    ('U', ['Ū', 'Ú', 'Ǔ', 'Ù', 'U']),
+    ('I', ['Ī', 'Í', 'Ǐ', 'Ì', 'I']),
+    ('O', ['Ō', 'Ó', 'Ǒ', 'Ò', 'O']),
+    ('Ü', ['Ǖ', 'Ǘ', 'Ǚ', 'Ǜ', 'U']),
+];
+
+fn lookup_replacement(input: char, tone: u8) -> Option<char> {
+    REPLACEMENTS.iter().find_map(|(key, tones)| {
+        if *key == input {
+            Some(tones[tone.saturating_sub(1) as usize % tones.len()])
+        } else {
+            None
+        }
+    })
+}
+
+fn clear_tone_mark(input: char) -> char {
+    for (letter, tone_marks) in REPLACEMENTS.iter() {
+        if tone_marks.contains(&input) {
+            return *letter;
+        }
+    }
+    input
 }
 
 /// # prettify
 /// ```
-/// extern crate prettify_pinyin;
 /// use prettify_pinyin::prettify;
 /// prettify(String::from("ma1 ma2 ma3 ma4 ma")); // --> mā má mǎ mà ma
 /// ```
-pub fn prettify(raw: String) -> String {
-    let mut replacements: HashMap<String, Vec<String>> = HashMap::new();
-    replacements.insert(
-        String::from("a"),
-        vec![
-            String::from("ā"),
-            String::from("á"),
-            String::from("ǎ"),
-            String::from("à"),
-        ],
-    );
-    replacements.insert(
-        String::from("e"),
-        vec![
-            String::from("ē"),
-            String::from("é"),
-            String::from("ě"),
-            String::from("è"),
-        ],
-    );
-    replacements.insert(
-        String::from("u"),
-        vec![
-            String::from("ū"),
-            String::from("ú"),
-            String::from("ǔ"),
-            String::from("ù"),
-        ],
-    );
-    replacements.insert(
-        String::from("i"),
-        vec![
-            String::from("ī"),
-            String::from("í"),
-            String::from("ǐ"),
-            String::from("ì"),
-        ],
-    );
-    replacements.insert(
-        String::from("o"),
-        vec![
-            String::from("ō"),
-            String::from("ó"),
-            String::from("ǒ"),
-            String::from("ò"),
-        ],
-    );
-    replacements.insert(
-        String::from("ü"),
-        vec![
-            String::from("ǖ"),
-            String::from("ǘ"),
-            String::from("ǚ"),
-            String::from("ǜ"),
-        ],
-    );
-    replacements.insert(
-        String::from("A"),
-        vec![
-            String::from("Ā"),
-            String::from("Á"),
-            String::from("Ă"),
-            String::from("À"),
-        ],
-    );
-    replacements.insert(
-        String::from("E"),
-        vec![
-            String::from("Ē"),
-            String::from("É"),
-            String::from("Ĕ"),
-            String::from("È"),
-        ],
-    );
-    replacements.insert(
-        String::from("U"),
-        vec![
-            String::from("Ū"),
-            String::from("Ú"),
-            String::from("Ŭ"),
-            String::from("Ù"),
-        ],
-    );
-    replacements.insert(
-        String::from("I"),
-        vec![
-            String::from("Ī"),
-            String::from("Í"),
-            String::from("Ĭ"),
-            String::from("Ì"),
-        ],
-    );
-    replacements.insert(
-        String::from("O"),
-        vec![
-            String::from("Ō"),
-            String::from("Ó"),
-            String::from("Ŏ"),
-            String::from("Ò"),
-        ],
-    );
-    replacements.insert(
-        String::from("Ü"),
-        vec![
-            String::from("Ǖ"),
-            String::from("Ǘ"),
-            String::from("Ǚ"),
-            String::from("Ǜ"),
-        ],
-    );
+pub fn prettify(text: String) -> String {
+    let medials: &str = "iuüIUÜ";
 
-    let mut medials: HashMap<String, u8> = HashMap::new();
-    medials.insert(String::from("i"), 0_u8);
-    medials.insert(String::from("u"), 0_u8);
-    medials.insert(String::from("ü"), 0_u8);
-
-    let mut syl_vec: Vec<String> = Vec::new();
-    let text = raw.replace('v', "ü");
+    let text = text.replace('v', "ü");
+    let text = text.replace('V', "Ü");
     let text = text.replace("u:", "ü");
     let text = text.replace("U:", "Ü");
-    let syllables: Vec<_> = text.split(' ').collect();
 
-    for syllable in syllables {
-        let tone: u8 = match syllable.chars().last().and_then(|c| c.to_digit(6)) {
+    let syllables = text.split(' ').map(|syllable| {
+        let mut chars: Vec<char> = syllable.chars().map(clear_tone_mark).collect();
+        let tone: u8 = match chars.last().and_then(|c| c.to_digit(6)) {
             Some(tone) => tone as u8,
-            None => {
-                syl_vec.push(syllable.to_string());
-                continue;
-            }
+            None => return Cow::Borrowed(syllable),
         };
 
         if tone == 0_u8 || tone > 5_u8 {
             // This is not a valid number
-            syl_vec.push(syllable.to_string());
-        } else if tone == 5_u8 {
-            let pretty_syl: String = syllable
-                .chars()
-                .take(syllable.chars().count() - 1)
-                .collect();
-            syl_vec.push(pretty_syl);
+            Cow::Borrowed(syllable)
         } else {
-            let mut j = 0_u8;
-            let mut done = false;
-
-            while !done {
-                let current_letter: String = syllable.chars().skip(j as usize).take(1).collect();
-                let next_letter: String = syllable
-                    .chars()
-                    .skip((j + (1_u8)) as usize)
-                    .take(1)
-                    .collect();
-
-                if replacements.contains_key(&current_letter) {
-                    let to_replace = if replacements.contains_key(&next_letter)
-                        && medials.contains_key(&current_letter)
-                    {
-                        next_letter
-                    } else {
-                        current_letter
-                    };
-
-                    let replaced: String = syllable.replace(
-                        &to_replace,
-                        replacements
-                            .get(&to_replace)
-                            .unwrap()
-                            .get((tone - (1_u8)) as usize)
-                            .unwrap(),
-                    );
-                    let pretty_syl: String = replaced
-                        .chars()
-                        .take(replaced.chars().count() - 1)
-                        .collect();
-                    syl_vec.push(pretty_syl);
+            for i in 0..chars.len() - 1 {
+                let current_letter = chars[i];
+                let next_letter = chars[i + 1];
+                if let Some(new_current_letter) = lookup_replacement(current_letter, tone) {
+                    if let Some(new_next_letter) = lookup_replacement(next_letter, tone) {
+                        if medials.contains(current_letter) {
+                            // if 'i', 'u' or 'ü' precedes a vowel, put the tone-mark over that vowel instead
+                            chars[i + 1] = new_next_letter;
+                            break;
+                        }
+                    }
+                    chars[i] = new_current_letter;
                     break;
-                }
-
-                j += 1_u8;
-                if j as usize == syllable.chars().count() {
-                    done = true;
+                } else {
                 }
             }
+            // truncate the tone number
+            chars.truncate(chars.len() - 1);
+            Cow::Owned(chars.into_iter().collect())
         }
-    }
+    });
 
-    let pretty_pinyin: String = syl_vec.join(" ");
+    // Would have liked to use `intersperse` here to avoid the Vec but it isn't stable yet.
+    let pretty_pinyin: String = syllables.collect::<Vec<_>>().join(" ");
 
     pretty_pinyin
 }
