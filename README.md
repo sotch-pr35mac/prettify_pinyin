@@ -5,8 +5,6 @@ Turn pinyin written with tone numbers and turn it into pinyin with node marks. p
 
 ### Usage
 ```rust
-extern crate prettify_pinyin;
-
 use prettify_pinyin::prettify;
 
 let test = String::from("ma1 ma2 ma3 ma4 ma");
