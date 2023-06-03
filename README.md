@@ -7,8 +7,7 @@ Turn pinyin written with tone numbers and turn it into pinyin with node marks. p
 ```rust
 use prettify_pinyin::prettify;
 
-let test = String::from("ma1 ma2 ma3 ma4 ma");
-let formatted: String = prettify(test);
+let formatted: String = prettify("ma1 ma2 ma3 ma4 ma");
 
 println!("{}", formatted); // --> mā má mǎ mà ma
 ```
